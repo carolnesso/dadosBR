@@ -1,0 +1,183 @@
+PAGES 4
+
+===== PAGE 1 =====
+ 
+Case
+ 
+DadosBR
+ 
+Introdução  
+Você  vai  desenvolver  um  aplicativo  Android  chamado  DadosBR .  
+A
+ 
+ideia
+ 
+é
+ 
+simples
+ 
+e
+ 
+muito
+ 
+real:
+ 
+transformar
+ 
+consultas
+ 
+públicas
+ 
+do
+ 
+Brasil
+ 
+em
+ 
+uma
+ 
+experiência
+ 
+rápida,
+ 
+clara
+ 
+e
+ 
+confiável
+ 
+no
+ 
+celular.
+ 
+O  objetivo  desse  case  é  avaliar  como  você  estrutura  um  app  em  Flutter  do  zero  ao  APK ,  
+lidando
+ 
+com:
+ 
+●  consumo  de  API  REST  ●  navegação  e  UI  organizada  ●  estados  de  carregamento  e  erro  ●  validações  e  tratamento  de  entradas  inválidas  ●  qualidade  de  código  (estrutura,  legibilidade  e  manutenção)  
+Você  vai  consumir  exclusivamente  a  BrasilAPI :  https://brasilapi.com.br/ 
+Documentação:  https://brasilapi.com.br/docs 
+ 
+Escopo  técnico 
+●  Flutter  (Dart)  ●  Deve  gerar  um  APK  instalável  (Android)  ●  Consumo  HTTP  (pode  usar  http ou  dio)  ●  Gerenciamento  de  estado  (livre:  setState,  Provider,  Riverpod,  Bloc,  etc.)  ●  Código  organizado  em  camadas  (mínimo  recomendado):  ○  services ou  data (requisições)  ○  models (DTOs/entidades)  ○  screens (telas)  ○  widgets (componentes  reutilizáveis)  
+Boas  práticas  mínimas  esperadas  
+●  Tratamento  de  loading  /  erro  /  vazio  ●  Validação  de  entradas  (CEP/CNPJ/domínio)  ●  Mensagens  de  erro  claras  para  consultas  inválidas  ●  Requisições  com  timeout e  fallback  de  erro  amigável  ●  UI  limpa  e  usável  (sem  “tela  crua”)  
+ 
+ 
+
+
+===== PAGE 2 =====
+ 
+Modelo  mínimo  (telas  que  devem  existir) 
+O  app  deve  ter  um  menu  inicial  (Home)  com  3  opções:  
+1.  Consultar  CEP  2.  Consultar  CNPJ  3.  Consultar  Registro.br  (domínio)  
+Cada  opção  abre  uma  tela  com:  
+●  Campo  de  busca  ●  Botão  de  consultar  ●  Área  de  resultado  (card/lista)  ●  Tratamento  de  erro  para  consulta  inválida  
+ 
+Regras  de  cada  consulta 
+1)  Consulta  de  CEP  
+Consumir  endpoint  da  BrasilAPI(cep  v2)  para  CEP.  
+Exibir  exatamente:  
+●  Rua  ●  Bairro  ●  Cidade  ●  Estado  ●  CEP  ●  Bandeira  do  estado  (imagem)  
+Observação  importante  (bandeira):  
+A
+ 
+bandeira
+ 
+deve
+ 
+corresponder
+ 
+ao
+ 
+UF
+ 
+retornado
+ 
+na
+ 
+consulta.
+ 
+Você
+ 
+pode
+ 
+obter
+ 
+as
+ 
+bandeiras
+ 
+por
+ 
+um
+ 
+pacote
+ 
+de
+ 
+assets
+ 
+no
+ 
+projeto
+ 
+ou
+ 
+via
+ 
+URLs
+ 
+públicas,
+ 
+desde
+ 
+que
+ 
+fique
+ 
+estável
+ 
+e
+ 
+funcionando.
+ 
+ 
+2)  Consulta  de  CNPJ  
+Consumir  endpoint  da  BrasilAPI  para  CNPJ.  Exibir:  
+●  Razão  social  ●  Nome  fantasia  ●  CNPJ  ●  Endereço  completo  (montado  com  logradouro/número/município/UF/CEP  quando  
+existir)
+ ●  Capital  social  ●  Natureza  jurídica  ●  CNAE  Principal  (cnae_fiscal_descricao)  ●  CNAEs  secundários  (somente  a  descrição  de  cada  um)  
+
+
+===== PAGE 3 =====
+ 
+3)  Consulta  de  Registro.br  (Domínio)  
+Consumir  endpoint  da  BrasilAPI  para  domínio/registro.br.  
+Exibir:  
+●  Domínio  ●  Status  do  domínio  ●  Hosts  (servidores  DNS)  ●  Status  da  publicação  ●  Data  de  expiração  
+ 
+Tratamento  de  erro 
+Em  qualquer  busca  (CEP,  CNPJ,  domínio),  você  deve  tratar  pelo  menos:  
+●  entrada  vazia  ●  formato  inválido  (ex.:  CEP  com  letras,  CNPJ  curto,  domínio  sem  “.br”,  etc.)  ●  “não  encontrado”  (404/sem  resultado)  ●  erro  de  conexão  /  timeout  ●  erro  inesperado  (500,  resposta  quebrada)  
+A  tela  não  pode  “quebrar”.  O  usuário  sempre  precisa  receber  feedback  claro  e  ter  opção  de  
+tentar
+ 
+novamente.
+ 
+ 
+Entregáveis 
+Você  deverá  enviar  um  arquivo  .zip  contendo:  
+1.  APK  gerado  pelo  Flutter  2.  Código-fonte  completo  do  projeto  Flutter  (com  pubspec.yaml,  assets,  etc.)  3.  README.md  curto  com:  ○  como  rodar  o  projeto  (flutter  pub  get,  flutter  run)  ○  como  gerar  o  APK  ○  decisões  técnicas  (estado,  estrutura,  libs)  
+ 
+ 
+
+
+===== PAGE 4 =====
+ 
+Entrega  e  apresentação 
+●  Prazo  de  entrega  até  quinta-feira,  05  de  março,  às  23h59.  
+ ●  Envie  um  .zip  para  o  email  io@eliteformacoes.com.br com  título  “Case  -  DadosBR  Front”  contendo  APK,  código-fonte  completo  e  README.md. 
+ ●  Na  apresentação  presencial  na  Elite,  você  deverá:  ○  instalar  o  APK  (ou  demonstrar  rodando  no  celular/emulador)  ○  mostrar  as  3  telas  funcionando  (CEP/CNPJ/domínio)  ○  explicar  rapidamente  a  arquitetura  e  as  decisões  técnicas  ○  comentar  como  tratou  erros  e  validações  
+ 
