@@ -2,65 +2,51 @@
 
 import 'package:dadosbr/core/errors/app_failure.dart';
 import 'package:dadosbr/core/network/api_client.dart';
-import 'package:dadosbr/features/cnpj/data/cnpj_search_handler.dart';
-import 'package:dadosbr/features/search/domain/search_contract.dart';
+import 'package:dadosbr/features/cnpj/presentation/cnpj_query_config.dart';
+import 'package:dadosbr/features/query/domain/query_state.dart';
+import 'package:dadosbr/features/query/presentation/query_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
-  group('CnpjSearchHandler', () {
-    test('normalize removes non-digits', () {
-      final handler = CnpjSearchHandler();
+  group('CnpjQueryConfig', () {
+    final config = CnpjQueryConfig.config;
 
-      expect(handler.normalize('11.444.777/0001-61'), '11444777000161');
+    test('normalize removes non-digits', () {
+      expect(config.normalize('11.444.777/0001-61'), '11444777000161');
     });
 
     test('validate returns emptyInput for blank value', () {
-      final handler = CnpjSearchHandler();
-
-      final failure = handler.validate('   ', '');
-
+      final failure = config.validate('   ', '');
       expect(failure, isNotNull);
       expect(failure!.type, FailureType.emptyInput);
     });
 
     test('validate returns invalidInput for invalid characters', () {
-      final handler = CnpjSearchHandler();
-
-      final failure = handler.validate('11.444.777/0001-6A', '1144477700016');
-
+      final failure = config.validate('11.444.777/0001-6A', '1144477700016');
       expect(failure, isNotNull);
       expect(failure!.type, FailureType.invalidInput);
     });
 
     test('validate returns invalidInput for wrong length', () {
-      final handler = CnpjSearchHandler();
-
-      final failure = handler.validate('11.444.777/0001', '114447770001');
-
+      final failure = config.validate('11.444.777/0001', '114447770001');
       expect(failure, isNotNull);
       expect(failure!.type, FailureType.invalidInput);
     });
 
     test('validate returns invalidInput for invalid check digits', () {
-      final handler = CnpjSearchHandler();
-
-      final failure = handler.validate('11.444.777/0001-62', '11444777000162');
-
+      final failure = config.validate('11.444.777/0001-62', '11444777000162');
       expect(failure, isNotNull);
       expect(failure!.type, FailureType.invalidInput);
     });
 
     test('validate returns null for valid CNPJ', () {
-      final handler = CnpjSearchHandler();
-
-      final failure = handler.validate('11.444.777/0001-61', '11444777000161');
-
+      final failure = config.validate('11.444.777/0001-61', '11444777000161');
       expect(failure, isNull);
     });
 
-    test('fetch maps dto to SearchResultData', () async {
+    test('controller search maps dto to QueryResultData', () async {
       final mockClient = MockClient((request) async {
         expect(request.url.toString(), 'https://brasilapi.com.br/api/cnpj/v1/11444777000161');
         return http.Response(
@@ -86,32 +72,37 @@ void main() {
         );
       });
 
-      final handler = CnpjSearchHandler(client: ApiClient(client: mockClient));
+      final controller = QueryController(
+        config: config,
+        client: ApiClient(client: mockClient),
+      );
+      addTearDown(controller.dispose);
 
-      final result = await handler.fetch('11444777000161');
+      final message = await controller.search('11.444.777/0001-61');
 
-      expect(result.title, 'Resultado CNPJ');
-      expect(_fieldValue(result, 'Razao social'), 'Empresa Exemplo LTDA');
-      expect(_fieldValue(result, 'Nome fantasia'), 'Empresa Exemplo');
-      expect(_fieldValue(result, 'CNPJ'), '11.444.777/0001-61');
+      expect(message, isNull);
+      expect(controller.state.status, QueryStatus.success);
+      expect(controller.state.result!.title, 'Resultado CNPJ');
+      expect(controller.state.result!.fields['Razao social'], 'Empresa Exemplo LTDA');
+      expect(controller.state.result!.fields['Nome fantasia'], 'Empresa Exemplo');
+      expect(controller.state.result!.fields['CNPJ'], '11.444.777/0001-61');
       expect(
-        _fieldValue(result, 'Endereco'),
+        controller.state.result!.fields['Endereco'],
         'Rua Exemplo, 123, Sao Paulo, SP, 01000-000',
       );
-      expect(_fieldValue(result, 'Capital social'), '100000.00');
+      expect(controller.state.result!.fields['Capital social'], '100000.00');
       expect(
-        _fieldValue(result, 'Natureza juridica'),
+        controller.state.result!.fields['Natureza juridica'],
         'Sociedade Empresaria Limitada',
       );
-      expect(_fieldValue(result, 'CNAE principal'), 'Desenvolvimento de software');
       expect(
-        _fieldValue(result, 'CNAEs secundarios'),
+        controller.state.result!.fields['CNAE principal'],
+        'Desenvolvimento de software',
+      );
+      expect(
+        controller.state.result!.fields['CNAEs secundarios'],
         'Consultoria em tecnologia da informacao | Suporte tecnico',
       );
     });
   });
-}
-
-String _fieldValue(SearchResultData result, String label) {
-  return result.fields.firstWhere((field) => field.label == label).value;
 }
