@@ -21,19 +21,30 @@ class CepSearchHandler implements SearchHandler {
       'Insira um CEP valido para consultar dados de endereco pela BrasilAPI.';
 
   @override
-  String get hint => 'CEP (somente numeros)';
+  String get hint => 'CEP';
+
+  @override
+  SearchInputKind get inputKind => SearchInputKind.cep;
 
   @override
   String normalize(String input) => input.replaceAll(RegExp(r'[^0-9]'), '');
 
   @override
-  AppFailure? validate(String normalized) {
-    if (normalized.isEmpty) {
+  AppFailure? validate(String rawInput, String normalized) {
+    if (rawInput.trim().isEmpty) {
       return const AppFailure(
         FailureType.emptyInput,
         'Informe um CEP para consultar.',
       );
     }
+
+    if (RegExp(r'[^0-9\s-]').hasMatch(rawInput)) {
+      return const AppFailure(
+        FailureType.invalidInput,
+        'CEP deve conter apenas numeros.',
+      );
+    }
+
     if (normalized.length != 8) {
       return const AppFailure(
         FailureType.invalidInput,
@@ -47,6 +58,11 @@ class CepSearchHandler implements SearchHandler {
   Future<SearchResultData> fetch(String normalized) async {
     final data = await _client.getJson(
       'https://brasilapi.com.br/api/cep/v2/$normalized',
+      requestLabel: 'consulta de CEP',
+      notFoundMessage: 'CEP nao encontrado. Verifique os digitos e tente novamente.',
+      badRequestMessage: 'CEP invalido para consulta na API.',
+      unavailableMessage:
+          'Servico de CEP indisponivel no momento. Tente novamente em instantes.',
     );
 
     final street = _string(data['street']);
@@ -87,6 +103,3 @@ CEP: $cep
     return 'assets/flags/$upperUf.png';
   }
 }
-
-
-
