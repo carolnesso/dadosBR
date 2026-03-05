@@ -1,12 +1,14 @@
 ﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../app.dart';
 import '../../../core/errors/app_failure.dart';
 import '../domain/search_contract.dart';
+import 'input_formatters.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key, required this.handler});
@@ -32,8 +34,9 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Future<void> _onSearch() async {
-    final normalized = widget.handler.normalize(_controller.text);
-    final validationError = widget.handler.validate(normalized);
+    final rawInput = _controller.text;
+    final normalized = widget.handler.normalize(rawInput);
+    final validationError = widget.handler.validate(rawInput, normalized);
 
     if (validationError != null) {
       _showSnack(validationError.message, isError: true);
@@ -94,6 +97,43 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
+  TextInputType _keyboardType() {
+    switch (widget.handler.inputKind) {
+      case SearchInputKind.cep:
+      case SearchInputKind.cnpj:
+        return TextInputType.number;
+      case SearchInputKind.domain:
+      case SearchInputKind.text:
+        return TextInputType.text;
+    }
+  }
+
+  List<TextInputFormatter> _inputFormatters() {
+    switch (widget.handler.inputKind) {
+      case SearchInputKind.cep:
+        return [DigitMaskInputFormatter(mask: '#####-###', maxDigits: 8)];
+      case SearchInputKind.cnpj:
+        return [DigitMaskInputFormatter(mask: '##.###.###/####-##', maxDigits: 14)];
+      case SearchInputKind.domain:
+        return [LowerCaseDomainInputFormatter()];
+      case SearchInputKind.text:
+        return const [];
+    }
+  }
+
+  int? _maxLength() {
+    switch (widget.handler.inputKind) {
+      case SearchInputKind.cep:
+        return 9;
+      case SearchInputKind.cnpj:
+        return 18;
+      case SearchInputKind.domain:
+        return 253;
+      case SearchInputKind.text:
+        return null;
+    }
+  }
+
   void _showSnack(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -101,7 +141,7 @@ class _SearchPageState extends State<SearchPage> {
       ..showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
+          backgroundColor: isError ? const Color(0xFFFEABAB) : const Color(0xFF9EFF8B),
           content: Text(message),
         ),
       );
@@ -113,14 +153,6 @@ class _SearchPageState extends State<SearchPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
-        title: Text(
-          widget.handler.title,
-          style: const TextStyle(
-            color: AppColors.accent,
-            fontWeight: FontWeight.w700,
-            fontSize: 24,
-          ),
-        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -131,14 +163,34 @@ class _SearchPageState extends State<SearchPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
+                  widget.handler.title,
+                  style: const TextStyle(
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 24,
+                  ),
+                ),
+                Text(
                   widget.handler.description,
                   style: const TextStyle(color: AppColors.muted, fontSize: 15),
                 ),
                 const SizedBox(height: 24),
                 TextField(
                   controller: _controller,
+                  keyboardType: _keyboardType(),
+                  inputFormatters: _inputFormatters(),
+                  maxLength: _maxLength(),
+                  textInputAction: TextInputAction.search,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  onSubmitted: (_) {
+                    if (!_isLoading) {
+                      _onSearch();
+                    }
+                  },
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
+                    counterText: '',
                     hintText: widget.handler.hint,
                     hintStyle: const TextStyle(color: AppColors.muted),
                     enabledBorder: const UnderlineInputBorder(
@@ -211,7 +263,7 @@ class _SearchPageState extends State<SearchPage> {
                       ),
                       if (!_hasResult)
                         const Text(
-                          'Dados da pesquisa aparecerao aqui.',
+                          'Os dados da pesquisa aparecerão aqui.',
                           style: TextStyle(color: AppColors.muted),
                         )
                       else
@@ -285,5 +337,3 @@ class _ResultContent extends StatelessWidget {
     );
   }
 }
-
-
