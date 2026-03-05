@@ -1,6 +1,8 @@
 ﻿import '../../../core/errors/app_failure.dart';
 import '../../../core/network/api_client.dart';
 import '../../search/domain/search_contract.dart';
+import 'mappers/cnpj_result_mapper.dart';
+import 'models/cnpj_dto.dart';
 
 class CnpjSearchHandler implements SearchHandler {
   CnpjSearchHandler({ApiClient? client}) : _client = client ?? ApiClient();
@@ -64,7 +66,7 @@ class CnpjSearchHandler implements SearchHandler {
 
   @override
   Future<SearchResultData> fetch(String normalized) async {
-    final data = await _client.getJson(
+    final json = await _client.getJson(
       'https://brasilapi.com.br/api/cnpj/v1/$normalized',
       requestLabel: 'consulta de CNPJ',
       notFoundMessage: 'CNPJ nao encontrado na base consultada.',
@@ -73,70 +75,8 @@ class CnpjSearchHandler implements SearchHandler {
           'Servico de CNPJ indisponivel no momento. Tente novamente em instantes.',
     );
 
-    final razaoSocial = _string(data['razao_social']);
-    final nomeFantasia = _string(data['nome_fantasia']);
-    final cnpj = _string(data['cnpj']);
-    final capitalSocial = _string(data['capital_social']);
-    final naturezaJuridica = _string(data['natureza_juridica']);
-    final cnaePrincipal = _string(data['cnae_fiscal_descricao']);
-    final cnaesSecundarios = _secondaryCnaes(data['cnaes_secundarios']);
-    final endereco = _buildAddress(data);
-
-    return SearchResultData(
-      title: 'Resultado CNPJ',
-      fields: [
-        ResultField(label: 'Razao social', value: razaoSocial),
-        ResultField(label: 'Nome fantasia', value: nomeFantasia),
-        ResultField(label: 'CNPJ', value: cnpj),
-        ResultField(label: 'Endereco', value: endereco),
-        ResultField(label: 'Capital social', value: capitalSocial),
-        ResultField(label: 'Natureza juridica', value: naturezaJuridica),
-        ResultField(label: 'CNAE principal', value: cnaePrincipal),
-        ResultField(label: 'CNAEs secundarios', value: cnaesSecundarios),
-      ],
-      shareText: '''
-Consulta de CNPJ
-Razao social: $razaoSocial
-Nome fantasia: $nomeFantasia
-CNPJ: $cnpj
-Endereco: $endereco
-Capital social: $capitalSocial
-Natureza juridica: $naturezaJuridica
-CNAE principal: $cnaePrincipal
-CNAEs secundarios: $cnaesSecundarios
-''',
-    );
-  }
-
-  String _buildAddress(Map<String, dynamic> data) {
-    final parts = [
-      _string(data['logradouro']),
-      _string(data['numero']),
-      _string(data['municipio']),
-      _string(data['uf']),
-      _string(data['cep']),
-    ].where((item) => item != '-').toList();
-
-    if (parts.isEmpty) return '-';
-    return parts.join(', ');
-  }
-
-  String _secondaryCnaes(dynamic raw) {
-    if (raw is! List) return '-';
-
-    final descriptions = raw
-        .whereType<Map<String, dynamic>>()
-        .map((item) => _string(item['descricao']))
-        .where((item) => item != '-')
-        .toList();
-
-    if (descriptions.isEmpty) return '-';
-    return descriptions.join(' | ');
-  }
-
-  String _string(dynamic value) {
-    final text = value?.toString().trim() ?? '';
-    return text.isEmpty ? '-' : text;
+    final dto = CnpjDto.fromJson(json);
+    return dto.toSearchResultData();
   }
 
   bool _isValidCnpj(String value) {
@@ -144,8 +84,10 @@ CNAEs secundarios: $cnaesSecundarios
     if (RegExp(r'^(\d)\1{13}$').hasMatch(value)) return false;
 
     final numbers = value.split('').map(int.parse).toList();
-    final firstVerifier = _calculateVerifier(numbers, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
-    final secondVerifier = _calculateVerifier(numbers, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+    final firstVerifier =
+        _calculateVerifier(numbers, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+    final secondVerifier =
+        _calculateVerifier(numbers, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
 
     return numbers[12] == firstVerifier && numbers[13] == secondVerifier;
   }

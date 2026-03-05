@@ -1,6 +1,8 @@
 ﻿import '../../../core/errors/app_failure.dart';
 import '../../../core/network/api_client.dart';
 import '../../search/domain/search_contract.dart';
+import 'mappers/registro_br_result_mapper.dart';
+import 'models/registro_br_dto.dart';
 
 class RegistroBrSearchHandler implements SearchHandler {
   RegistroBrSearchHandler({ApiClient? client}) : _client = client ?? ApiClient();
@@ -87,7 +89,7 @@ class RegistroBrSearchHandler implements SearchHandler {
 
   @override
   Future<SearchResultData> fetch(String normalized) async {
-    final data = await _client.getJson(
+    final json = await _client.getJson(
       'https://brasilapi.com.br/api/registrobr/v1/$normalized',
       requestLabel: 'consulta de dominio Registro.br',
       notFoundMessage: 'Dominio nao encontrado no Registro.br.',
@@ -96,51 +98,7 @@ class RegistroBrSearchHandler implements SearchHandler {
           'Servico de dominio indisponivel no momento. Tente novamente em instantes.',
     );
 
-    final domain = _string(_readAny(data, ['domain', 'fqdn', 'host']));
-    final status = _string(_readAny(data, ['status']));
-    final hosts = _hostsToString(_readAny(data, ['hosts', 'host']));
-    final publication = _string(
-      _readAny(data, ['publication-status', 'publication_status']),
-    );
-    final expiresAt = _string(_readAny(data, ['expires-at', 'expires_at']));
-
-    return SearchResultData(
-      title: 'Resultado Registro.br',
-      fields: [
-        ResultField(label: 'Dominio', value: domain),
-        ResultField(label: 'Status do dominio', value: status),
-        ResultField(label: 'Hosts (DNS)', value: hosts),
-        ResultField(label: 'Status da publicacao', value: publication),
-        ResultField(label: 'Data de expiracao', value: expiresAt),
-      ],
-      shareText: '''
-Consulta Registro.br
-Dominio: $domain
-Status do dominio: $status
-Hosts: $hosts
-Status da publicacao: $publication
-Data de expiracao: $expiresAt
-''',
-    );
-  }
-
-  dynamic _readAny(Map<String, dynamic> data, List<String> keys) {
-    for (final key in keys) {
-      if (data.containsKey(key)) return data[key];
-    }
-    return null;
-  }
-
-  String _hostsToString(dynamic hosts) {
-    if (hosts is List && hosts.isNotEmpty) {
-      return hosts.map((item) => item.toString()).join(', ');
-    }
-    if (hosts is String && hosts.isNotEmpty) return hosts;
-    return '-';
-  }
-
-  String _string(dynamic value) {
-    final text = value?.toString().trim() ?? '';
-    return text.isEmpty ? '-' : text;
+    final dto = RegistroBrDto.fromJson(json);
+    return dto.toSearchResultData();
   }
 }

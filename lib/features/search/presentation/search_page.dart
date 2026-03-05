@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../app.dart';
+import '../../../app/theme/app_colors.dart';
 import '../../../core/errors/app_failure.dart';
 import '../domain/search_contract.dart';
 import 'input_formatters.dart';

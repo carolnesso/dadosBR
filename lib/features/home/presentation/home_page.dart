@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 
-import '../../../app.dart';
+import '../../../app/theme/app_colors.dart';
 import '../../cep/data/cep_search_handler.dart';
 import '../../cnpj/data/cnpj_search_handler.dart';
 import '../../registro_br/data/registro_br_search_handler.dart';
@@ -33,17 +33,17 @@ class HomePage extends StatelessWidget {
                     height: 79,
                     child: Image.asset('assets/logo/EliteLogorbranca.png'),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 130),
                   const Text(
                     'Realize consultas publicas de maneira rapida e pratica!',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                    style: TextStyle(color: Colors.white70, fontSize: 20),
                   ),
                   const SizedBox(height: 24),
                   const Text(
                     'O que deseja procurar hoje?',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    style: TextStyle(color: Colors.white, fontSize: 20),
                   ),
                   const SizedBox(height: 28),
                   for (final handler in _handlers) ...[

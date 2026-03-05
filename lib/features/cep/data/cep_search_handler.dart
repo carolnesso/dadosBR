@@ -1,6 +1,8 @@
 ﻿import '../../../core/errors/app_failure.dart';
 import '../../../core/network/api_client.dart';
 import '../../search/domain/search_contract.dart';
+import 'mappers/cep_result_mapper.dart';
+import 'models/cep_dto.dart';
 
 class CepSearchHandler implements SearchHandler {
   CepSearchHandler({ApiClient? client}) : _client = client ?? ApiClient();
@@ -56,7 +58,7 @@ class CepSearchHandler implements SearchHandler {
 
   @override
   Future<SearchResultData> fetch(String normalized) async {
-    final data = await _client.getJson(
+    final json = await _client.getJson(
       'https://brasilapi.com.br/api/cep/v2/$normalized',
       requestLabel: 'consulta de CEP',
       notFoundMessage: 'CEP nao encontrado. Verifique os digitos e tente novamente.',
@@ -65,41 +67,7 @@ class CepSearchHandler implements SearchHandler {
           'Servico de CEP indisponivel no momento. Tente novamente em instantes.',
     );
 
-    final street = _string(data['street']);
-    final neighborhood = _string(data['neighborhood']);
-    final city = _string(data['city']);
-    final state = _string(data['state']);
-    final cep = _string(data['cep']);
-
-    return SearchResultData(
-      title: 'Resultado CEP',
-      imageAssetPath: _stateFlagAssetPath(state),
-      fields: [
-        ResultField(label: 'Rua', value: street),
-        ResultField(label: 'Bairro', value: neighborhood),
-        ResultField(label: 'Cidade', value: city),
-        ResultField(label: 'Estado', value: state),
-        ResultField(label: 'CEP', value: cep),
-      ],
-      shareText: '''
-Consulta de CEP
-Rua: $street
-Bairro: $neighborhood
-Cidade: $city
-Estado: $state
-CEP: $cep
-''',
-    );
-  }
-
-  String _string(dynamic value) {
-    final text = value?.toString().trim() ?? '';
-    return text.isEmpty ? '-' : text;
-  }
-
-  String? _stateFlagAssetPath(String uf) {
-    if (uf.length != 2) return null;
-    final upperUf = uf.toUpperCase();
-    return 'assets/flags/$upperUf.png';
+    final dto = CepDto.fromJson(json);
+    return dto.toSearchResultData();
   }
 }
