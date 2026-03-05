@@ -27,9 +27,16 @@ abstract class SearchHandler {
   String get buttonLabel;
   String get description;
   String get hint;
+  SearchInputKind get inputKind => SearchInputKind.text;
 
   String normalize(String input);
-  AppFailure? validate(String normalized);
+  AppFailure? validate(String rawInput, String normalized);
   Future<SearchResultData> fetch(String normalized);
 }
 
+enum SearchInputKind {
+  text,
+  cep,
+  cnpj,
+  domain,
+}
