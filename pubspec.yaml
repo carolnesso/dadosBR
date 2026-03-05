@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  google_fonts: ^6.3.0
+  google_fonts: ^5.1.0
   http: ^1.2.2
   path_provider: ^2.1.5
   share_plus: ^11.0.0
@@ -25,3 +25,5 @@ flutter:
   assets:
     - assets/flags/
     - assets/logo/
+
+
