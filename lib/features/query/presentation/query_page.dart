@@ -57,8 +57,14 @@ class _QueryPageState extends State<QueryPage> {
 
   Future<void> _onSearch() async {
     final message = await _controller.search(_textController.text);
-    if (!mounted || message == null) return;
-    AppSnackbars.error(context, message);
+    if (!mounted) return;
+
+    if (message != null) {
+      AppSnackbars.error(context, message);
+      return;
+    }
+
+    AppSnackbars.success(context, 'Consulta concluida com sucesso.');
   }
 
   Future<void> _onDownload() async {

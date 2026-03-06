@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -42,11 +42,23 @@ class ApiClient {
         FailureType.timeout,
         'A $requestLabel demorou demais para responder. Tente novamente.',
       );
+    } on HandshakeException {
+      _logError(url, 'handshake after ${stopwatch.elapsedMilliseconds}ms');
+      throw const AppFailure(
+        FailureType.network,
+        'Falha de seguranca na conexao. Verifique data/hora do aparelho e tente novamente.',
+      );
     } on SocketException {
       _logError(url, 'network after ${stopwatch.elapsedMilliseconds}ms');
       throw const AppFailure(
         FailureType.network,
         'Sem conexao com a internet. Verifique sua rede e tente novamente.',
+      );
+    } on http.ClientException catch (error) {
+      _logError(url, 'client exception: $error');
+      throw AppFailure(
+        FailureType.network,
+        'Nao foi possivel conectar ao servidor para a $requestLabel.',
       );
     } catch (error) {
       _logError(url, 'unexpected: $error');
@@ -56,17 +68,22 @@ class ApiClient {
       );
     }
 
+    final responseMessage = _extractApiErrorMessage(response.body);
+
     if (response.statusCode == 404) {
       throw AppFailure(
         FailureType.notFound,
-        notFoundMessage ?? 'Nenhum resultado encontrado para essa consulta.',
+        responseMessage ??
+            notFoundMessage ??
+            'Nenhum resultado encontrado para essa consulta.',
       );
     }
 
     if (response.statusCode == 400 || response.statusCode == 422) {
       throw AppFailure(
         FailureType.invalidInput,
-        badRequestMessage ??
+        responseMessage ??
+            badRequestMessage ??
             'Os dados informados sao invalidos para essa consulta.',
       );
     }
@@ -81,14 +98,16 @@ class ApiClient {
     if (response.statusCode == 429) {
       throw AppFailure(
         FailureType.server,
-        'Muitas tentativas em pouco tempo. Aguarde e tente novamente.',
+        responseMessage ??
+            'Muitas tentativas em pouco tempo. Aguarde e tente novamente.',
       );
     }
 
     if (response.statusCode >= 500) {
       throw AppFailure(
         FailureType.server,
-        unavailableMessage ??
+        responseMessage ??
+            unavailableMessage ??
             'Servico indisponivel no momento para $requestLabel. Tente novamente.',
       );
     }
@@ -96,7 +115,7 @@ class ApiClient {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw AppFailure(
         FailureType.server,
-        'Falha na $requestLabel (HTTP ${response.statusCode}).',
+        responseMessage ?? 'Falha na $requestLabel (HTTP ${response.statusCode}).',
       );
     }
 
@@ -110,6 +129,8 @@ class ApiClient {
         FailureType.parse,
         'Resposta invalida da API.',
       );
+    } on AppFailure {
+      rethrow;
     } catch (error) {
       _logError(url, 'parse: $error');
       throw AppFailure(
@@ -160,5 +181,34 @@ class ApiClient {
   String _truncate(String value, {int max = 5000}) {
     if (value.length <= max) return value;
     return '${value.substring(0, max)}...(truncated)';
+  }
+
+  String? _extractApiErrorMessage(String body) {
+    if (body.trim().isEmpty) return null;
+
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is! Map<String, dynamic>) return null;
+
+      const candidates = [
+        'message',
+        'mensagem',
+        'error',
+        'erro',
+        'detail',
+        'details',
+      ];
+
+      for (final key in candidates) {
+        final value = decoded[key];
+        if (value == null) continue;
+        final text = value.toString().trim();
+        if (text.isNotEmpty) return text;
+      }
+    } catch (_) {
+      return null;
+    }
+
+    return null;
   }
 }

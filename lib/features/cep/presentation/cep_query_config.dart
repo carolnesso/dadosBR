@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/errors/app_failure.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/ui/formatters/app_input_formatters.dart';
 import '../../query/domain/query_config.dart';
 import '../../query/domain/query_result_data.dart';
@@ -42,6 +43,49 @@ class CepQueryConfig {
       return null;
     },
     buildUrl: (normalized) => 'https://brasilapi.com.br/api/cep/v2/$normalized',
+    fetchJson: (normalized, client) async {
+      try {
+        return await client.getJson(
+          'https://brasilapi.com.br/api/cep/v2/$normalized',
+          requestLabel: 'consulta de CEP',
+          notFoundMessage: 'CEP nao encontrado. Verifique os digitos e tente novamente.',
+          badRequestMessage: 'CEP invalido para consulta na API.',
+          unavailableMessage:
+              'Servico de CEP indisponivel no momento. Tente novamente em instantes.',
+        );
+      } on AppFailure catch (failure) {
+        if (failure.type != FailureType.timeout && failure.type != FailureType.server) {
+          rethrow;
+        }
+
+        final fallback = await client.getJson(
+          'https://viacep.com.br/ws/$normalized/json/',
+          requestLabel: 'consulta de CEP',
+          notFoundMessage: 'CEP nao encontrado. Verifique os digitos e tente novamente.',
+          badRequestMessage: 'CEP invalido para consulta na API.',
+          unavailableMessage:
+              'Servico de CEP indisponivel no momento. Tente novamente em instantes.',
+        );
+
+        final notFound = fallback['erro'] == true ||
+            fallback['erro']?.toString().toLowerCase() == 'true';
+
+        if (notFound) {
+          throw const AppFailure(
+            FailureType.notFound,
+            'CEP nao encontrado. Verifique os digitos e tente novamente.',
+          );
+        }
+
+        return {
+          'street': fallback['logradouro'],
+          'neighborhood': fallback['bairro'],
+          'city': fallback['localidade'],
+          'state': fallback['uf'],
+          'cep': fallback['cep'] ?? normalized,
+        };
+      }
+    },
     parseResult: (json) {
       final dto = CepDto.fromJson(json);
       return QueryResultData(
@@ -67,7 +111,8 @@ CEP: ${dto.cep}
     requestLabel: 'consulta de CEP',
     notFoundMessage: 'CEP nao encontrado. Verifique os digitos e tente novamente.',
     badRequestMessage: 'CEP invalido para consulta na API.',
-    unavailableMessage: 'Servico de CEP indisponivel no momento. Tente novamente em instantes.',
+    unavailableMessage:
+        'Servico de CEP indisponivel no momento. Tente novamente em instantes.',
   );
 
   static String? _flagPath(String uf) {

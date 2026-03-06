@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../core/errors/app_failure.dart';
 import '../../../core/network/api_client.dart';
@@ -36,13 +36,14 @@ class QueryController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final json = await _client.getJson(
-        _config.buildUrl(normalized),
-        requestLabel: _config.requestLabel,
-        notFoundMessage: _config.notFoundMessage,
-        badRequestMessage: _config.badRequestMessage,
-        unavailableMessage: _config.unavailableMessage,
-      );
+      final json = await (_config.fetchJson?.call(normalized, _client) ??
+          _client.getJson(
+            _config.buildUrl(normalized),
+            requestLabel: _config.requestLabel,
+            notFoundMessage: _config.notFoundMessage,
+            badRequestMessage: _config.badRequestMessage,
+            unavailableMessage: _config.unavailableMessage,
+          ));
 
       final result = _config.parseResult(json);
       _state = QueryState(
