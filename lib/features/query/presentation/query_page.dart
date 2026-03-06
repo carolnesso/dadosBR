@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
 import '../../../app/theme/app_colors.dart';
@@ -13,6 +14,7 @@ import '../../../core/ui/widgets/primary_button.dart';
 import '../../../core/ui/widgets/result_card.dart';
 import '../../../core/ui/widgets/snackbars.dart';
 import '../domain/query_config.dart';
+import '../domain/query_result_data.dart';
 import '../domain/query_state.dart';
 import 'query_controller.dart';
 
@@ -78,14 +80,12 @@ class _QueryPageState extends State<QueryPage> {
 
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final now = DateTime.now().millisecondsSinceEpoch;
-      final file = File('${dir.path}/${widget.config.id}_$now.txt');
-      await file.writeAsString(result.shareText);
+      final file = await _buildPdfFile(result: result, directoryPath: dir.path);
       if (!mounted) return;
-      AppSnackbars.success(context, 'Arquivo salvo em ${file.path}');
+      AppSnackbars.success(context, 'PDF salvo em ${file.path}');
     } catch (_) {
       if (!mounted) return;
-      AppSnackbars.error(context, 'Nao foi possivel salvar o arquivo.');
+      AppSnackbars.error(context, 'Nao foi possivel salvar o PDF.');
     }
   }
 
@@ -97,17 +97,55 @@ class _QueryPageState extends State<QueryPage> {
     }
 
     try {
+      final dir = await getTemporaryDirectory();
+      final file = await _buildPdfFile(result: result, directoryPath: dir.path);
+
       await SharePlus.instance.share(
         ShareParams(
           title: result.title,
           subject: result.title,
-          text: result.shareText,
+          text: 'Resultado da consulta em PDF.',
+          files: [XFile(file.path)],
         ),
       );
     } catch (_) {
       if (!mounted) return;
-      AppSnackbars.error(context, 'Nao foi possivel compartilhar o resultado.');
+      AppSnackbars.error(context, 'Nao foi possivel compartilhar o PDF.');
     }
+  }
+
+  Future<File> _buildPdfFile({
+    required QueryResultData result,
+    required String directoryPath,
+  }) async {
+    final pdf = pw.Document();
+    final createdAt = DateTime.now();
+
+    pdf.addPage(
+      pw.MultiPage(
+        build: (context) => [
+          pw.Text(
+            result.title,
+            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 16),
+          ...result.fields.entries.map(
+            (entry) => pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 8),
+              child: pw.Text('${entry.key}: ${entry.value}'),
+            ),
+          ),
+          pw.SizedBox(height: 20),
+          pw.Text('Gerado em: ${createdAt.toIso8601String()}'),
+        ],
+      ),
+    );
+
+    final filename = '${widget.config.id}_${createdAt.millisecondsSinceEpoch}.pdf';
+    final file = File('$directoryPath/$filename');
+    final bytes = await pdf.save();
+    await file.writeAsBytes(bytes, flush: true);
+    return file;
   }
 
   void _onDelete() {
@@ -203,4 +241,3 @@ class _QueryPageState extends State<QueryPage> {
     );
   }
 }
-
