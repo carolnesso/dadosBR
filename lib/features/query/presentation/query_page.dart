@@ -56,6 +56,8 @@ class _QueryPageState extends State<QueryPage> {
   }
 
   Future<void> _onSearch() async {
+    FocusScope.of(context).unfocus();
+
     final message = await _controller.search(_textController.text);
     if (!mounted) return;
 
@@ -201,3 +203,4 @@ class _QueryPageState extends State<QueryPage> {
     );
   }
 }
+
