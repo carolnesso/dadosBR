@@ -12,7 +12,7 @@ class CepQueryConfig {
     title: 'Consulta de CEP',
     description: 'Insira os dados pedidos para a pesquisa selecionada',
     fieldLabel: 'CEP',
-    hint: '01001-000',
+    hint: 'CEP',
     keyboardType: TextInputType.number,
     inputFormatters: [DigitMaskInputFormatter(mask: '#####-###', maxDigits: 8)],
     maxLength: 9,

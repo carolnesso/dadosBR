@@ -72,9 +72,9 @@ class ResultCard extends StatelessWidget {
               ),
             )
           else if (errorMessage != null && !_hasResult)
-            Text(errorMessage!, style: AppTextStyles.caption)
+            Text(errorMessage!, style: AppTextStyles.description)
           else if (!_hasResult)
-            const Text('Os dados da pesquisa aparecerao aqui.', style: AppTextStyles.caption)
+            const Text('\n Os dados da pesquisa aparecerão aqui.', style: AppTextStyles.description)
           else ...[
             if (imageAssetPath != null) ...[
               ClipRRect(
@@ -87,7 +87,7 @@ class ResultCard extends StatelessWidget {
                     height: 88,
                     color: const Color(0xFF2A2A2A),
                     alignment: Alignment.center,
-                    child: const Text('Bandeira indisponivel', style: AppTextStyles.caption),
+                    child: const Text('Bandeira indisponivel', style: AppTextStyles.description),
                   ),
                 ),
               ),

@@ -12,7 +12,7 @@ class CnpjQueryConfig {
     title: 'Consulta de CNPJ',
     description: 'Insira os dados pedidos para a pesquisa selecionada',
     fieldLabel: 'CNPJ',
-    hint: '00.000.000/0000-00',
+    hint: 'CNPJ',
     keyboardType: TextInputType.number,
     inputFormatters: [
       DigitMaskInputFormatter(mask: '##.###.###/####-##', maxDigits: 14),

@@ -12,26 +12,20 @@ class AppTextStyles {
   static const title = TextStyle(
     color: AppColors.textPrimary,
     fontSize: 20,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w900,
   );
 
   static const body = TextStyle(
     color: AppColors.textSecondary,
     fontSize: 20,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w100,
   );
 
   static const description = TextStyle(
     color: AppColors.textSecondary,
     fontSize: 18,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w100,
     height: 1.35,
-  );
-
-  static const caption = TextStyle(
-    color: AppColors.muted,
-    fontSize: 14,
-    fontWeight: FontWeight.w400,
   );
 
   static const button = TextStyle(
@@ -39,12 +33,6 @@ class AppTextStyles {
     fontSize: 18,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.2,
-  );
-
-  static const inputLabel = TextStyle(
-    color: AppColors.accent,
-    fontSize: 24,
-    fontWeight: FontWeight.w400,
   );
 
   static const resultLabel = TextStyle(
