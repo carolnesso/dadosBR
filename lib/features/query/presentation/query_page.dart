@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -117,7 +117,36 @@ class _QueryPageState extends State<QueryPage> {
     final state = _controller.state;
 
     return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(81),
+        child: AppBar(
+          automaticallyImplyLeading: false,
+          toolbarHeight: 81,
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          titleSpacing: 0,
+          title: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.chevron_left_rounded, size: 40),
+                  color: AppColors.textPrimary,
+                ),
+                const Spacer(),
+                SizedBox(
+                  width: 90,
+                  child: Image.asset('assets/logo/EliteLogorbranca.png'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       body: SafeArea(
+        top: false,
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.screenPadding),
@@ -126,27 +155,12 @@ class _QueryPageState extends State<QueryPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.chevron_left_rounded, size: 40),
-                        color: AppColors.textPrimary,
-                      ),
-                      const Spacer(),
-                      SizedBox(
-                        width: 90,
-                        child: Image.asset('assets/logo/EliteLogorbranca.png'),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: AppSpacing.s40),
                   Text(widget.config.title, style: AppTextStyles.sectionTitle),
                   const SizedBox(height: AppSpacing.s16),
                   Text(widget.config.description, style: AppTextStyles.description),
                   const SizedBox(height: 120),
                   AppTextField(
-                    label: widget.config.fieldLabel,
                     hint: widget.config.hint,
                     controller: _textController,
                     keyboardType: widget.config.keyboardType,
