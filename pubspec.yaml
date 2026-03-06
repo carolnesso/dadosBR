@@ -15,6 +15,7 @@ dependencies:
   path_provider: ^2.1.5
   pdf: ^3.11.1
   share_plus: ^11.0.0
+  flutter_launcher_icons: ^0.14.3
 
 dev_dependencies:
   flutter_test:
@@ -26,3 +27,10 @@ flutter:
   assets:
     - assets/flags/
     - assets/logo/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/logo/EliteLogo.png"
+  adaptive_icon_background: "#000000" # Android
+  adaptive_icon_foreground: "assets/logo/EliteLogo.png"
